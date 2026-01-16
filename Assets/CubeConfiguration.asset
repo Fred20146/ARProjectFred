@@ -16,7 +16,14 @@ MonoBehaviour:
   masseRandom: {x: 0.2, y: 10}
   materiaux:
   - {fileID: 2100000, guid: 83eabfe673263a445972586e5d8b56ee, type: 2}
-  - {fileID: 2100000, guid: 83eabfe673263a445972586e5d8b56ee, type: 2}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 640d498fb27344e129db775843f28254, type: 2}
+  - {fileID: 2100000, guid: de59f8a0db41e4321be77ded94d0c609, type: 2}
+  - {fileID: 2100000, guid: 17bc934bd851547bebca07c4aee49943, type: 2}
+  - {fileID: 2100000, guid: 3e8242b77882448b18e8de2c9708f5fd, type: 2}
+  rayonMouvement: 2
+  acceleration: 12
+  vitesseMax: 5
+  distanceArret: 0.1
+  tempsDecision: {x: 0.3, y: 1.2}
+  tempsEntreSauts: {x: 5, y: 10}
+  forceSaut: {x: 5, y: 10}
