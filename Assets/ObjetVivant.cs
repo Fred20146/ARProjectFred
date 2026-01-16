@@ -1,3 +1,6 @@
+using System.Numerics;
+using System.Runtime;
+using System.Threading.Tasks.Dataflow;
 using UnityEngine;
 
 public class ObjetVivant : MonoBehaviour
@@ -11,192 +14,263 @@ public class ObjetVivant : MonoBehaviour
 
     [Header("Layers")]
     public LayerMask layerSol;
-    public LayerMask layerObstacle;
 
-    // Décision & mouvement
-    Vector3 targetPosition;
+    // Mouvement
+    [Header("Mouvement")]
+    public Vector2 rayonMouvement; // X = min, Y = max
+
+    float MouvementX = Random.Range(
+            configuration.rayonMouvement.x,
+            configuration.rayonMouvement.y
+        ) * (Random.value < 0.5f ? -1f : 1f);
+    float MouvementZ = Random.Range(
+            configuration.rayonMouvement.x,
+            configuration.rayonMouvement.y
+        ) * (Random.value < 0.5f ? -1f : 1f);
+    Vector3 p = TransformBlock.position + new Vector3(MouvementX, 2f, MouvementZ);
+
     float decisionTimer;
     bool hasTarget;
 
-    // Saut
-    float jumpTimer;
+    // Stats aléatoires
+    float vitesseMax;
+    float forceSaut;
 
+    // Nourriture
+    Transform nourritureCible;
+
+    // =========================
     void Start()
     {
-        // Valeur aléatoire commune
-        float randomValue = Random.value;
+        -targetPosition = TransformBlock.position;
 
-        // Taille aléatoire
-        float taille = Mathf.Lerp(
-            configuration.tailleRandom.x,
-            configuration.tailleRandom.y,
-            randomValue
-        );
-        transform.localScale = Vector3.one * taille;
-
-        // Masse aléatoire
-        float masse = Mathf.Lerp(
-            configuration.masseRandom.x,
-            configuration.masseRandom.y,
-            randomValue
-        );
-        rigidbodyCube.mass = masse;
-
-        // Matériau aléatoire
-        if (configuration.materiaux.Count > 0)
+        if (configuration == null || rigidbodyCube == null)
         {
-            int index = Random.Range(0, configuration.materiaux.Count);
-            meshRenderer.sharedMaterial = configuration.materiaux[index];
+            Debug.LogError("Configuration ou Rigidbody manquant !");
+            enabled = false;
+            return;
         }
 
-        // Timers initiaux
+        
+
+        // Stats aléatoires (TP4)
+        vitesseMax = Random.Range(
+            configuration.vitesseMaxRandom.x,
+            configuration.vitesseMaxRandom.y
+        );
+
+        forceSaut = Random.Range(
+            configuration.forceSautRandom.x,
+            configuration.forceSautRandom.y
+        );
+
+        // Taille aléatoire (TP1)
+        float t = Random.value;
+        float scale = Mathf.Lerp(
+            configuration.tailleRandom.x,
+            configuration.tailleRandom.y,
+            t
+        );
+        transform.localScale = Vector3.one * scale;
+
+        // Masse
+        rigidbodyCube.mass = Mathf.Lerp(
+            configuration.masseRandom.x,
+            configuration.masseRandom.y,
+            t
+        );
+
+        // Matériau aléatoire
+        if (meshRenderer != null && configuration.materiaux.Count > 0)
+        {
+            meshRenderer.material =
+                configuration.materiaux[
+                    Random.Range(0, configuration.materiaux.Count)
+                ];
+        }
+
         decisionTimer = Random.Range(
             configuration.tempsDecision.x,
             configuration.tempsDecision.y
         );
-
-        jumpTimer = Random.Range(
-            configuration.tempsEntreSauts.x,
-            configuration.tempsEntreSauts.y
-        );
     }
 
+    // =========================
     void Update()
     {
-        HandleDecision();
-        HandleJump();
-    }
+        -targetTimer -= Time.deltaTime;
+        -sautTimer -= Time.deltaTime;
 
-    void FixedUpdate()
-    {
-        HandleMovement();
-    }
+        if (-targetTimer <= 0f )
+            {
+                if (TryPickTarget(out -target))
+                {
+                    -targetTimer = Random.Range(configuration.tempsDecision.x, configuration.tempsDecision.y);
+                    
+                }
+                else
+                {
+                    -targetTimer = 0.1f;
+                }
+            }
+        if (-sautTimer <= 0f)
+            {
+                rigidbodyCube.AddForce(Vector3.up * configuration.forceSaut, ForceMode.Acceleration);
+                -sautTimer = Random.Range(configuration.tempsEntreSauts.x, configuration.tempsEntreSauts.y);
+            }
 
-    // =========================
-    // DECISION
-    // =========================
-    void HandleDecision()
-    {
-        decisionTimer -= Time.deltaTime;
+        if (TryFindFood(out _target))
+            {
+                return;
+            }
 
-        if (decisionTimer <= 0f)
+            HandleEat();
+
+        // Despawn si trop bas (TP4)
+        if (transform.position.y < configuration.limiteChuteY)
         {
+            Destroy(gameObject);
+        }
+
+        if (currentFood != null)
+        {
+            float distance = Vector3.Distance(
+                transform.position,
+                currentFood.position
+            );
+
+            if (distance <= configuration.distanceManger)
+            {
+                Destroy(currentFood.parent.gameObject);
+                currentFood = null;
+                hasTarget = false;
+            }
+        }
+
+
+        // =========================
+        void FixedUpdate()
+        {
+            HandleMovement();
+        }
+
+        // =========================
+        void HandleDecision()
+        {
+            decisionTimer -= Time.deltaTime;
+
+            if (decisionTimer > 0f)
+                return;
+
             if (TryGetValidPosition(out Vector3 pos))
             {
                 targetPosition = pos;
                 hasTarget = true;
+            }
 
-                decisionTimer = Random.Range(
-                    configuration.tempsDecision.x,
-                    configuration.tempsDecision.y
-                );
-            }
-            else
-            {
-                // Retente rapidement
-                decisionTimer = 0.2f;
-            }
+            decisionTimer = Random.Range(
+                configuration.tempsDecision.x,
+                configuration.tempsDecision.y
+            );
         }
     }
 
     // =========================
-    // MOUVEMENT
-    // =========================
     void HandleMovement()
     {
-        if (!hasTarget) return;
+        if (!hasTarget)
+            return;
 
         Vector3 direction = targetPosition - transform.position;
         direction.y = 0f;
 
-        if (direction.magnitude < configuration.distanceArret)
+        if (direction.magnitude <= configuration.distanceArret)
         {
             hasTarget = false;
             return;
         }
 
-        Vector3 force = direction.normalized * configuration.acceleration;
-        rigidbodyCube.AddForce(force, ForceMode.Force);
+        rigidbodyCube.AddForce(
+            direction.normalized * configuration.acceleration,
+            ForceMode.Force
+        );
 
-        // Limiter la vitesse max
+        // Limite vitesse max
         Vector3 velocity = rigidbodyCube.linearVelocity;
-        Vector3 horizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
+        Vector3 horizontal = new Vector3(velocity.x, 0f, velocity.z);
 
-        if (horizontalVelocity.magnitude > configuration.vitesseMax)
+        if (horizontal.magnitude > vitesseMax)
         {
-            horizontalVelocity = horizontalVelocity.normalized * configuration.vitesseMax;
+            Vector3 limited = horizontal.normalized * vitesseMax;
             rigidbodyCube.linearVelocity = new Vector3(
-                horizontalVelocity.x,
+                limited.x,
                 velocity.y,
-                horizontalVelocity.z
+                limited.z
             );
         }
     }
 
     // =========================
-    // SAUT
-    // =========================
-    void HandleJump()
+    bool TryGetValidPosition(out Vector3 pos)
     {
-        jumpTimer -= Time.deltaTime;
+        float distance = Random.Range(
+            configuration.rayonMouvement.x,
+            configuration.rayonMouvement.y
+        );
 
-        if (jumpTimer <= 0f)
+        Vector3 randomDir = Random.insideUnitSphere;
+        randomDir.y = 0f;
+
+        Vector3 origin = transform.position + randomDir.normalized * distance + Vector3.up * 5f;
+
+        if (Physics.SpherCast(p, 0.05f, Vector3.down, out var hit2, 10f, layerVivant))
         {
-            float force = Random.Range(
-                configuration.forceSaut.x,
-                configuration.forceSaut.y
-            );
-
-            rigidbodyCube.AddForce(
-                Vector3.up * force,
-                ForceMode.Impulse
-            );
-
-            jumpTimer = Random.Range(
-                configuration.tempsEntreSauts.x,
-                configuration.tempsEntreSauts.y
-            );
+            continue;
         }
+
+        
     }
 
     // =========================
-    // POSITION VALIDE
-    // =========================
-    bool TryGetValidPosition(out Vector3 position)
+    bool TryFindFood(out Transform food)
     {
-        for (int i = 0; i < 20; i++)
+        Collider[] hits = Physics.OverlapSphere(
+            transform.position,
+            configuration.distanceDetectionNourriture
+        );
+
+        foreach (var hit in hits)
         {
-            Vector3 randomOffset = new Vector3(
-                Random.Range(-configuration.rayonMouvement, configuration.rayonMouvement),
-                2f,
-                Random.Range(-configuration.rayonMouvement, configuration.rayonMouvement)
-            );
-
-            Vector3 rayOrigin = transform.position + randomOffset;
-
-            if (!Physics.Raycast(
-                rayOrigin,
-                Vector3.down,
-                out RaycastHit hit,
-                5f,
-                layerSol))
+            if (hit.CompareTag("Nourriture"))
             {
-                continue;
+                food = hit.transform;
+                return true;
             }
-
-            if (Physics.CheckSphere(
-                hit.point,
-                0.5f,
-                layerObstacle))
-            {
-                continue;
-            }
-
-            position = hit.point;
-            return true;
         }
 
-        position = transform.position;
+        food = null;
         return false;
     }
+
+    // =========================
+    void HandleEat()
+    {
+        if (nourritureCible == null)
+            return;
+
+        float d = Vector3.Distance(
+            transform.position,
+            nourritureCible.position
+        );
+
+        if (d <= configuration.distanceManger)
+        {
+            Destroy(nourritureCible.gameObject);
+            transform.localScale += Vector3.one * configuration.nourrirGrossissement;
+            nourritureCible = null;
+            hasTarget = false;
+        }
+    }
+
 }
+

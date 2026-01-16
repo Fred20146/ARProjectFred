@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c6229026bf86487d8f4c34ddefe047a, type: 3}
+  m_Name: VivantConfiguration_pyramide
+  m_EditorClassIdentifier: Assembly-CSharp::VivantConfiguration
+  tailleRandom: {x: 3, y: 6}
+  masseRandom: {x: 0.5, y: 4}
+  materiaux:
+  - {fileID: 2100000, guid: 9505ad99def2e47acb4c809555e1e5a5, type: 2}
+  rayonMouvement: {x: 0, y: 0}
+  nourrirGrossissement: 0
+  limiteChuteY: -5
+  acceleration: 12
+  distanceArret: 0.1
+  vitesseMaxRandom: {x: 0.5, y: 1.5}
+  forceSautRandom: {x: 0.5, y: 1}
+  tempsDecision: {x: 0.3, y: 1.2}
+  tempsEntreSauts: {x: 0.8, y: 2}
+  distanceDetectionNourriture: 6
+  distanceManger: 0.6

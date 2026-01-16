@@ -20,10 +20,14 @@ MonoBehaviour:
   - {fileID: 2100000, guid: de59f8a0db41e4321be77ded94d0c609, type: 2}
   - {fileID: 2100000, guid: 17bc934bd851547bebca07c4aee49943, type: 2}
   - {fileID: 2100000, guid: 3e8242b77882448b18e8de2c9708f5fd, type: 2}
-  rayonMouvement: 2
+  rayonMouvement: {x: 0.1, y: 0.5}
+  nourrirGrossissement: 0.1
+  limiteChuteY: -5
   acceleration: 12
-  vitesseMax: 5
   distanceArret: 0.1
+  vitesseMaxRandom: {x: 2, y: 5}
+  forceSautRandom: {x: 4, y: 8}
   tempsDecision: {x: 0.3, y: 1.2}
   tempsEntreSauts: {x: 5, y: 10}
-  forceSaut: {x: 5, y: 10}
+  distanceDetectionNourriture: 6
+  distanceManger: 0.6

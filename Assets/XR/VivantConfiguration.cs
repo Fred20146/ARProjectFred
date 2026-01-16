@@ -9,19 +9,36 @@ public class VivantConfiguration : ScriptableObject
 {
     [Header("Apparence")]
     public Vector2 tailleRandom = new Vector2(0.3f, 1.2f);
-    public Vector2 masseRandom = new Vector2(0.5f, 5f);
+    public Vector2 masseRandom = new Vector2(0.5f, 4f);
     public List<Material> materiaux;
 
     [Header("Mouvement")]
-    public float rayonMouvement = 2f;
-    public float acceleration = 5f;
-    public float vitesseMax = 3f;
-    public float distanceArret = 0.2f;
+    public Vector2 rayonMouvement; // X = min, Y = max
+
+    [Header("Croissance")]
+    public float nourrirGrossissement = 0.1f;
+
+    [Header("Sécurité")]
+    public float limiteChuteY = -5f;
+
+
+
+    public float acceleration = 12f;
+    // public float vitesseMax = 5f;
+    public float distanceArret = 0.1f;
+    [Header("Stats aléatoires")]
+    public Vector2 vitesseMaxRandom = new Vector2(2f, 5f);
+    public Vector2 forceSautRandom = new Vector2(4f, 8f);
+
 
     [Header("Decision")]
-    public Vector2 tempsDecision = new Vector2(1f, 3f);
+    public Vector2 tempsDecision = new Vector2(0.3f, 1.2f);
 
     [Header("Saut")]
-    public Vector2 tempsEntreSauts = new Vector2(2f, 6f);
-    public Vector2 forceSaut = new Vector2(3f, 6f);
+    public Vector2 tempsEntreSauts = new Vector2(0.8f, 2f);
+    // public Vector2 forceSaut = new Vector2(5f, 9f);
+
+    [Header("Nourriture")]
+    public float rayonNourriture = 1f;
+    public float distanceManger = 0.6f;
 }
